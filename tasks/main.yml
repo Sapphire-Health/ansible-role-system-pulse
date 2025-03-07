@@ -1,0 +1,117 @@
+---
+- name: Check version of installed ansible.windows collection
+  ansible.builtin.debug:
+    msg: "ansible.windows version {{ lookup('community.general.collection_version', 'ansible.windows') }}"
+
+- name: Create temp folder on target
+  ansible.windows.win_file:
+    path: "{{ sp_install_files_path }}"
+    state: directory
+
+- name: Copy HTTP install file
+  ansible.windows.win_get_url:
+    url: "{{ sp_install_source_dir }}/{{ sp_install_source_file }}"
+    dest: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    force: false
+  when: sp_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
+
+- name: Copy install file from Ansible server
+  ansible.windows.win_copy:
+    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_install_source_file }}"
+    dest: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    force: false
+  when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
+
+- name: Install IIS features
+  ansible.windows.win_feature:
+    name:
+      - Web-Server                   # IIS Web Server
+      - Web-Mgmt-Tools               # IIS Management Tools
+      - Web-Asp-Net45                # ASP.NET 4.5 (Highest version available)
+      - Web-Http-Redirect            # HTTP Redirect feature
+      - Web-Http-Logging             # IIS Logging
+      - Web-Request-Monitor          # IIS Monitoring
+      - Web-Net-Ext45                # .NET Extensibility 4.5
+      - Web-Windows-Auth             # Windows Authentication for IIS
+      - Web-ISAPI-Ext                # ISAPI Extensions
+      - Web-ISAPI-Filter             # ISAPI Filters
+      - NET-Framework-Features       # .NET Framework 3.5 (Includes HTTP Activation)
+      - NET-Framework-45-Features    # .NET Framework 4.5+
+      - NET-WCF-HTTP-Activation45    # WCF HTTP Activation for .NET 4.5+
+      - Web-Metabase                 # IIS 6 Metabase Compatability
+      - MSMQ                         # Message Queuing (MSMQ)
+      - MSMQ-Server                  # MSMQ Server component
+      - MSMQ-Services                # MSMQ Services
+      - Web-Stat-Compression         # Static Content Compression
+      - Web-Dyn-Compression          # Dynamic Content Compression
+    state: present
+  register: iis_features
+  notify: Restart IIS
+
+# TODO: Add certificate binding
+
+- name: Enable Static & Dynamic Compression in IIS
+  ansible.windows.win_shell: |
+    Import-Module WebAdministration
+    Set-WebConfigurationProperty -Filter /system.webServer/httpCompression -Name dynamicCompressionEnableCpuUsage -Value 0
+    Set-WebConfigurationProperty -Filter /system.webServer/httpCompression -Name staticCompressionEnabled -Value True
+    Set-WebConfigurationProperty -Filter /system.webServer/httpCompression -Name dynamicCompressionEnabled -Value True
+
+- name: Install System Pulse
+  ansible.windows.win_package:
+    path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    product_id: "{12345678-ABCD-1234-5678-ABCDEFGH123}" # Replace with the actual MSI Product ID
+    state: present
+
+# - name: Install Application from msi with multiple properties for installer
+#   ansible.windows.win_package:
+#     path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+#     # product_id: "{{ kpr_product_id }}"
+#     provider: msi
+#     state: present
+#     arguments: >-
+#       {{ sp_msi_args }}
+#       APPPOOLNAME="{{ kpr_domain_user }}"
+#       APPPOOLPASS="{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
+#     log_path: "{{ sp_install_files_path }}\\kuiper_install.log"
+#     wait_for_children: true
+#   no_log: true # otherwise, this will output the password
+#   become: true
+#   become_method: ansible.builtin.runas
+#   become_flags: logon_type=interactive logon_flags=with_profile
+#   vars:
+#     ansible_become_user: "{{ kpr_domain_user }}"
+#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
+#   register: kuiper_install
+#   failed_when: kuiper_install.rc not in [0, 3010]
+
+# - name: Install Application from msi with DSC
+#   ansible.windows.win_dsc:
+#     resource_name: Package
+#     Name: "Kuiper Install"
+#     Path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+#     ProductId: "{{ kpr_product_id }}"
+#     Arguments: "{{ sp_msi_args }}"
+#   become: true
+#   become_method: ansible.builtin.runas
+#   become_flags: logon_type=interactive logon_flags=with_profile
+#   vars:
+#     ansible_become_user: "{{ kpr_domain_user }}"
+#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
+#   register: kuiper_install
+
+# - name: Run executable in 'C:\Program Files' with a custom chdir
+#   ansible.windows.win_command:
+#     # When using cmd, the arguments need to be quoted manually
+#     cmd: "{{ sp_install_files_path }}\\{{ sp_install_source_file }} /qn /norestart {{ sp_msi_args }}"
+#   become: true
+#   become_method: ansible.builtin.runas
+#   become_flags: logon_type=interactive logon_flags=with_profile
+#   vars:
+#     ansible_become_user: "{{ kpr_domain_user }}"
+#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
+#   register: kuiper_install
+
+# - name: Debug
+#   ansible.builtin.debug:
+#     msg: "{{ kuiper_install }}"
