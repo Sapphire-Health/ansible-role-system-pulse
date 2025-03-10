@@ -57,11 +57,34 @@
     Set-WebConfigurationProperty -Filter /system.webServer/httpCompression -Name staticCompressionEnabled -Value True
     Set-WebConfigurationProperty -Filter /system.webServer/httpCompression -Name dynamicCompressionEnabled -Value True
 
+- name: Ensure the System Pulse config directory exists
+  ansible.windows.win_file:
+    path: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config"
+    state: directory
+
+- name: Generate ConnectionStrings.config from template
+  ansible.builtin.template:
+    src: "ConnectionStrings.config.j2"
+    dest: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\ConnectionStrings.config"
+    mode: ignore
+
+- name: Generate membership.config from template
+  ansible.builtin.template:
+    src: "membership.config.j2"
+    dest: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\membership.config"
+    mode: ignore
+
 - name: Install System Pulse
   ansible.windows.win_package:
     path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
     product_id: "{12345678-ABCD-1234-5678-ABCDEFGH123}" # Replace with the actual MSI Product ID
     state: present
+
+- name: Start System Pulse Configuration Editor with UPGRADE flag
+  ansible.windows.win_shell: |
+    $process = Start-Process -FilePath "{{ sp_configuration_editor_exe }}" -ArgumentList "-UPGRADE" -PassThru
+    Start-Sleep -Seconds 15
+    if (!$process.HasExited) { Stop-Process -Id $process.Id -Force }
 
 # - name: Install Application from msi with multiple properties for installer
 #   ansible.windows.win_package:

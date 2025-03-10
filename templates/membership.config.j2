@@ -1,0 +1,13 @@
+<membership defaultProvider="AspNetActiveDirectoryMembershipProvider">
+    <providers>
+        <remove name="AspNetSqlMembershipProvider" />
+        <add connectionStringName="EMT-SQLDB" maxInvalidPasswordAttempts="10"
+            enablePasswordReset="true" requiresQuestionAndAnswer="false"
+            requiresUniqueEmail="false" applicationName="/SystemPulse"
+            name="AspNetSqlMembershipProvider" type="System.Web.Security.SqlMembershipProvider, System.Web, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <add connectionStringName="AspNetActiveDirectoryConnectionString"
+            connectionUsername="{{ lookup('ansible.builtin.env', 'DOMAIN_ADMIN_USER', default=domain_admin_user) }}" connectionPassword="{{ lookup('ansible.builtin.env', 'DOMAIN_ADMIN_PASSWORD', default=domain_admin_password) }}"
+            attributeMapUsername="sAMAccountName" name="AspNetActiveDirectoryMembershipProvider"
+            type="System.Web.Security.ActiveDirectoryMembershipProvider, System.Web, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    </providers>
+</membership>
