@@ -62,17 +62,9 @@
     force: false
   when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
 
-- name: Import certificate using certutil (matches GUI behavior)
+- name: Import certificate using certutil (used instead of ansible.windows.win_certificate_store due to issues binding)
   ansible.windows.win_shell: |
     certutil -f -p "{{ lookup('ansible.builtin.env', 'CERTIFICATE_PASSWORD') }}" -importPFX "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
-
-# - name: Import the PFX certificate into Windows Certificate Store
-#   ansible.windows.win_certificate_store:
-#     path: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
-#     state: present
-#     store_name: MY
-#     password: "{{ lookup('ansible.builtin.env', 'CERTIFICATE_PASSWORD', default=CERTIFICATE_PASSWORD) }}"
-#     key_exportable: false
 
 - name: Get the certificate thumbprint
   ansible.windows.win_shell: |
@@ -128,56 +120,3 @@
     $process = Start-Process -FilePath "{{ sp_configuration_editor_exe }}" -ArgumentList "-UPGRADE" -PassThru
     Start-Sleep -Seconds 15
     if (!$process.HasExited) { Stop-Process -Id $process.Id -Force }
-
-# - name: Install Application from msi with multiple properties for installer
-#   ansible.windows.win_package:
-#     path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
-#     # product_id: "{{ kpr_product_id }}"
-#     provider: msi
-#     state: present
-#     arguments: >-
-#       {{ sp_msi_args }}
-#       APPPOOLNAME="{{ kpr_domain_user }}"
-#       APPPOOLPASS="{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
-#     log_path: "{{ sp_install_files_path }}\\kuiper_install.log"
-#     wait_for_children: true
-#   no_log: true # otherwise, this will output the password
-#   become: true
-#   become_method: ansible.builtin.runas
-#   become_flags: logon_type=interactive logon_flags=with_profile
-#   vars:
-#     ansible_become_user: "{{ kpr_domain_user }}"
-#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
-#   register: kuiper_install
-#   failed_when: kuiper_install.rc not in [0, 3010]
-
-# - name: Install Application from msi with DSC
-#   ansible.windows.win_dsc:
-#     resource_name: Package
-#     Name: "Kuiper Install"
-#     Path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
-#     ProductId: "{{ kpr_product_id }}"
-#     Arguments: "{{ sp_msi_args }}"
-#   become: true
-#   become_method: ansible.builtin.runas
-#   become_flags: logon_type=interactive logon_flags=with_profile
-#   vars:
-#     ansible_become_user: "{{ kpr_domain_user }}"
-#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
-#   register: kuiper_install
-
-# - name: Run executable in 'C:\Program Files' with a custom chdir
-#   ansible.windows.win_command:
-#     # When using cmd, the arguments need to be quoted manually
-#     cmd: "{{ sp_install_files_path }}\\{{ sp_install_source_file }} /qn /norestart {{ sp_msi_args }}"
-#   become: true
-#   become_method: ansible.builtin.runas
-#   become_flags: logon_type=interactive logon_flags=with_profile
-#   vars:
-#     ansible_become_user: "{{ kpr_domain_user }}"
-#     ansible_become_password: "{{ lookup('ansible.builtin.env', 'KPR_DOMAIN_PASSWORD', default=kpr_domain_user_password) }}"
-#   register: kuiper_install
-
-# - name: Debug
-#   ansible.builtin.debug:
-#     msg: "{{ kuiper_install }}"
