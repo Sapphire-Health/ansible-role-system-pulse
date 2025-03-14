@@ -48,7 +48,46 @@
   register: iis_features
   notify: Restart IIS
 
-# TODO: Add certificate binding
+- name: Copy HTTP certificate file
+  ansible.windows.win_get_url:
+    url: "{{ sp_install_source_dir }}/{{ sp_certificate_source_file }}"
+    dest: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+    force: false
+  when: sp_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
+
+- name: Copy certificate file from Ansible server
+  ansible.windows.win_copy:
+    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_install_certificate_file }}"
+    dest: "{{ sp_install_files_path }}\\{{ sp_install_certificate_file }}"
+    force: false
+  when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
+
+- name: Import certificate using certutil (matches GUI behavior)
+  ansible.windows.win_shell: |
+    certutil -f -p "{{ lookup('ansible.builtin.env', 'CERTIFICATE_PASSWORD') }}" -importPFX "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+
+# - name: Import the PFX certificate into Windows Certificate Store
+#   ansible.windows.win_certificate_store:
+#     path: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+#     state: present
+#     store_name: MY
+#     password: "{{ lookup('ansible.builtin.env', 'CERTIFICATE_PASSWORD', default=CERTIFICATE_PASSWORD) }}"
+#     key_exportable: false
+
+- name: Get the certificate thumbprint
+  ansible.windows.win_shell: |
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -match "CN={{ sp_certificate_common_name }}" }
+    $cert.Thumbprint
+  register: cert_thumbprint
+
+- name: Bind certificate to Default Website in IIS
+  community.windows.win_iis_webbinding:
+    name: "Default Web Site"
+    protocol: https
+    port: 443
+    certificate_hash: "{{ cert_thumbprint.stdout.strip() }}"
+    certificate_store_name: "MY"
+  when: cert_thumbprint.stdout | length > 0
 
 - name: Enable Static & Dynamic Compression in IIS
   ansible.windows.win_shell: |
@@ -67,12 +106,16 @@
     src: "ConnectionStrings.config.j2"
     dest: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\ConnectionStrings.config"
     mode: ignore
+  args:
+    creates: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\ConnectionStrings.config"
 
 - name: Generate membership.config from template
   ansible.builtin.template:
     src: "membership.config.j2"
     dest: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\membership.config"
     mode: ignore
+  args:
+    creates: "C:\\Program Files (x86)\\Epic\\System Pulse\\Web\\App_Data\\Config\\membership.config"
 
 - name: Install System Pulse
   ansible.windows.win_package:
