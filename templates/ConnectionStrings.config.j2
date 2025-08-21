@@ -1,8 +1,8 @@
 <connectionStrings>
-    <add name="EMT-SQLDB" connectionString="Data Source=epic-msql-sapph;Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER', default=sql_spuser_user) }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD', default=sql_spuser_password) }};Max Pool Size=1000"
+    <add name="EMT-SQLDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME', default=epic-msql-sapph) }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER', default=sql_spuser_user) }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD', default=sql_spuser_password) }};Max Pool Size=1000"
         providerName="System.Data.SqlClient" />
-    <add name="OperationalDB" connectionString="Data Source=epic-msql-sapph;Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER', default=sql_spuser_user) }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD', default=sql_spuser_password) }};Max Pool Size=1000"
+    <add name="OperationalDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME', default=epic-msql-sapph) }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER', default=sql_spuser_user) }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD', default=sql_spuser_password) }};Max Pool Size=1000"
         providerName="System.Data.SqlClient" />
-    <add name="AspNetActiveDirectoryConnectionString" connectionString="LDAP://sapphire.dev"
+    <add name="AspNetActiveDirectoryConnectionString" connectionString="LDAP://{{ lookup('ansible.builtin.env', 'DOMAIN_NAME', default=sapphire.dev) }}"
         providerName="System.Data.SqlClient" />
 </connectionStrings>
