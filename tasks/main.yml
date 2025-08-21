@@ -57,8 +57,8 @@
 
 - name: Copy certificate file from Ansible server
   ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_install_certificate_file }}"
-    dest: "{{ sp_install_files_path }}\\{{ sp_install_certificate_file }}"
+    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_certificate_source_file }}"
+    dest: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
     force: false
   when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
 
