@@ -65,7 +65,7 @@
 
 - name: Import certificate using certutil (used instead of ansible.windows.win_certificate_store due to issues binding)
   ansible.windows.win_shell: |
-    certutil -f -p "{{ lookup('ansible.builtin.env', 'CERTIFICATE_PASSWORD') }}" -importPFX "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+    certutil -f -p "{{ lookup('ansible.builtin.env', 'PFX_PASSWORD') }}" -importPFX "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
 
 - name: Get the certificate thumbprint
   ansible.windows.win_shell: |
