@@ -24,29 +24,30 @@
 
 - name: Install IIS features
   ansible.windows.win_feature:
-    name:
-      - Web-Server                   # IIS Web Server
-      - Web-Mgmt-Tools               # IIS Management Tools
-      - Web-Asp-Net45                # ASP.NET 4.5 (Highest version available)
-      - Web-Http-Redirect            # HTTP Redirect feature
-      - Web-Http-Logging             # IIS Logging
-      - Web-Request-Monitor          # IIS Monitoring
-      - Web-Net-Ext45                # .NET Extensibility 4.5
-      - Web-Windows-Auth             # Windows Authentication for IIS
-      - Web-ISAPI-Ext                # ISAPI Extensions
-      - Web-ISAPI-Filter             # ISAPI Filters
-      - NET-Framework-Features       # .NET Framework 3.5 (Includes HTTP Activation)
-      - NET-Framework-45-Features    # .NET Framework 4.5+
-      - NET-WCF-HTTP-Activation45    # WCF HTTP Activation for .NET 4.5+
-      - Web-Metabase                 # IIS 6 Metabase Compatability
-      - MSMQ                         # Message Queuing (MSMQ)
-      - MSMQ-Server                  # MSMQ Server component
-      - MSMQ-Services                # MSMQ Services
-      - Web-Stat-Compression         # Static Content Compression
-      - Web-Dyn-Compression          # Dynamic Content Compression
+    name: "{{ item }}"
     state: present
   register: iis_features
   notify: Restart IIS
+  loop:
+    - Web-Server                   # IIS Web Server
+    - Web-Mgmt-Tools               # IIS Management Tools
+    - Web-Asp-Net45                # ASP.NET 4.5 (Highest version available)
+    - Web-Http-Redirect            # HTTP Redirect feature
+    - Web-Http-Logging             # IIS Logging
+    - Web-Request-Monitor          # IIS Monitoring
+    - Web-Net-Ext45                # .NET Extensibility 4.5
+    - Web-Windows-Auth             # Windows Authentication for IIS
+    - Web-ISAPI-Ext                # ISAPI Extensions
+    - Web-ISAPI-Filter             # ISAPI Filters
+    - NET-Framework-Features       # .NET Framework 3.5 (Includes HTTP Activation)
+    - NET-Framework-45-Features    # .NET Framework 4.5+
+    - NET-WCF-HTTP-Activation45    # WCF HTTP Activation for .NET 4.5+
+    - Web-Metabase                 # IIS 6 Metabase Compatability
+    - MSMQ                         # Message Queuing (MSMQ)
+    - MSMQ-Server                  # MSMQ Server component
+    - MSMQ-Services                # MSMQ Services
+    - Web-Stat-Compression         # Static Content Compression
+    - Web-Dyn-Compression          # Dynamic Content Compression
 
 - name: Copy HTTP certificate file
   ansible.windows.win_get_url:
