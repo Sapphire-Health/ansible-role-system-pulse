@@ -1,7 +1,7 @@
 <connectionStrings>
-    <add name="EMT-SQLDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME') }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER') }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD') }};Max Pool Size=1000"
+    <add name="EMT-SQLDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME') }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER') }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD') }};Max Pool Size=1000"
         providerName="System.Data.SqlClient" />
-    <add name="OperationalDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME') }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER_USER') }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD') }};Max Pool Size=1000"
+    <add name="OperationalDB" connectionString="Data Source={{ lookup('ansible.builtin.env', 'SQL_HOSTNAME') }};Initial Catalog=SystemPulse;User ID={{ lookup('ansible.builtin.env', 'SQL_SPUSER') }};Password={{ lookup('ansible.builtin.env', 'SQL_SPUSER_PASSWORD') }};Max Pool Size=1000"
         providerName="System.Data.SqlClient" />
     <add name="AspNetActiveDirectoryConnectionString" connectionString="LDAP://{{ lookup('ansible.builtin.env', 'DOMAIN_NAME') }}"
         providerName="System.Data.SqlClient" />
