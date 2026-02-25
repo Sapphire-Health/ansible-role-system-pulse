@@ -5,22 +5,22 @@
 
 - name: Create temp folder on target
   ansible.windows.win_file:
-    path: "{{ sp_install_files_path }}"
+    path: "{{ system_pulse_install_files_path }}"
     state: directory
 
 - name: Copy HTTP install file
   ansible.windows.win_get_url:
-    url: "{{ sp_install_source_dir }}/{{ sp_install_source_file }}"
-    dest: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    url: "{{ system_pulse_install_source_dir }}/{{ system_pulse_install_source_file }}"
+    dest: "{{ system_pulse_install_files_path }}\\{{ system_pulse_install_source_file }}"
     force: false
-  when: sp_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
+  when: system_pulse_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
 
 - name: Copy install file from Ansible server
   ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_install_source_file }}"
-    dest: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    src: "{{ system_pulse_install_source_dir }}/{{ system_pulse_install_source_file }}"
+    dest: "{{ system_pulse_install_files_path }}\\{{ system_pulse_install_source_file }}"
     force: false
-  when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
+  when: system_pulse_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
 
 - name: Install IIS features
   ansible.windows.win_feature:
@@ -39,7 +39,7 @@
     - Web-Windows-Auth             # Windows Authentication for IIS
     - Web-ISAPI-Ext                # ISAPI Extensions
     - Web-ISAPI-Filter             # ISAPI Filters
-    - NET-Framework-Features       # .NET Framework 3.5 (Includes HTTP Activation)
+    # - NET-Framework-Features       # .NET Framework 3.5 (Includes HTTP Activation)
     - NET-Framework-45-Features    # .NET Framework 4.5+
     - NET-WCF-HTTP-Activation45    # WCF HTTP Activation for .NET 4.5+
     - Web-Metabase                 # IIS 6 Metabase Compatability
@@ -51,25 +51,25 @@
 
 - name: Copy HTTP certificate file
   ansible.windows.win_get_url:
-    url: "{{ sp_install_source_dir }}/{{ sp_certificate_source_file }}"
-    dest: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+    url: "{{ system_pulse_install_source_dir }}/{{ system_pulse_certificate_source_file }}"
+    dest: "{{ system_pulse_install_files_path }}\\{{ system_pulse_certificate_source_file }}"
     force: false
-  when: sp_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
+  when: system_pulse_install_source_dir is ansible.builtin.uri(schemes=['http', 'https'])
 
 - name: Copy certificate file from Ansible server
   ansible.windows.win_copy:
-    src: "{{ playbook_dir }}/{{ sp_install_source_dir }}/{{ sp_certificate_source_file }}"
-    dest: "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+    src: "{{ system_pulse_install_source_dir }}/{{ system_pulse_certificate_source_file }}"
+    dest: "{{ system_pulse_install_files_path }}\\{{ system_pulse_certificate_source_file }}"
     force: false
-  when: sp_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
+  when: system_pulse_install_source_dir is not ansible.builtin.uri(schemes=['http', 'https'])
 
 - name: Import certificate using certutil (used instead of ansible.windows.win_certificate_store due to issues binding)
   ansible.windows.win_shell: |
-    certutil -f -p "{{ lookup('ansible.builtin.env', 'PFX_PASSWORD') }}" -importPFX "{{ sp_install_files_path }}\\{{ sp_certificate_source_file }}"
+    certutil -f -p "{{ lookup('ansible.builtin.env', 'PFX_PASSWORD') }}" -importPFX "{{ system_pulse_install_files_path }}\\{{ system_pulse_certificate_source_file }}"
 
 - name: Get the certificate thumbprint
   ansible.windows.win_shell: |
-    $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -match "CN={{ sp_certificate_common_name }}" }
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -match "CN={{ system_pulse_certificate_common_name }}" }
     $cert.Thumbprint
   register: cert_thumbprint
 
@@ -112,12 +112,12 @@
 
 - name: Install System Pulse
   ansible.windows.win_package:
-    path: "{{ sp_install_files_path }}\\{{ sp_install_source_file }}"
+    path: "{{ system_pulse_install_files_path }}\\{{ system_pulse_install_source_file }}"
     product_id: "{12345678-ABCD-1234-5678-ABCDEFGH123}" # Replace with the actual MSI Product ID
     state: present
 
 - name: Start System Pulse Configuration Editor with UPGRADE flag
   ansible.windows.win_shell: |
-    $process = Start-Process -FilePath "{{ sp_configuration_editor_exe }}" -ArgumentList "-UPGRADE" -PassThru
+    $process = Start-Process -FilePath "{{ system_pulse_configuration_editor_exe }}" -ArgumentList "-UPGRADE" -PassThru
     Start-Sleep -Seconds 15
     if (!$process.HasExited) { Stop-Process -Id $process.Id -Force }

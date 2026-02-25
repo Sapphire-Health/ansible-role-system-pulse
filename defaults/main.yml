@@ -1,0 +1,1 @@
+system_pulse_install_source_dir: "{{ shared_files_directory }}"
